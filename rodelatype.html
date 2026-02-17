@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>RoDeLa Type Ultimate</title>
+
+<style>
+:root{
+    --main:#4f46e5;
+    --bg:#f4f6fb;
+    --card:#ffffff;
+    --text:#111827;
+}
+
+.dark{
+    --bg:#111827;
+    --card:#1f2937;
+    --text:#f9fafb;
+}
+
+body{
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    text-align:center;
+    transition:0.3s;
+}
+
+header{
+    background:var(--main);
+    color:white;
+    padding:15px;
+    font-size:22px;
+}
+
+button{
+    padding:10px 18px;
+    margin:6px;
+    border:none;
+    border-radius:8px;
+    font-size:14px;
+    cursor:pointer;
+    background:var(--main);
+    color:white;
+    transition:0.2s;
+}
+button:hover{
+    transform:translateY(-2px);
+    opacity:0.9;
+}
+
+.card{
+    background:var(--card);
+    margin:20px auto;
+    padding:20px;
+    width:90%;
+    max-width:800px;
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+textarea,input{
+    width:90%;
+    padding:10px;
+    font-size:18px;
+    border-radius:8px;
+    border:2px solid #ccc;
+    margin-top:10px;
+}
+
+.hidden{display:none;}
+
+.gameArea{
+    height:250px;
+    position:relative;
+    overflow:hidden;
+    border:1px solid #ccc;
+    margin-top:15px;
+}
+
+.word{
+    position:absolute;
+    font-weight:bold;
+    font-size:20px;
+}
+
+footer{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    background:var(--main);
+    color:white;
+    padding:8px;
+    font-size:12px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+RoDeLa Type Ultimate
+<button onclick="toggleDark()">🌙</button>
+<button onclick="openSettings()">⚙</button>
+</header>
+
+<div id="home" class="card">
+<h2>메인 메뉴</h2>
+<button onclick="showPractice()">타자 연습</button>
+<button onclick="showGame()">타자 게임</button>
+<button onclick="showRanking()">랭킹</button>
+</div>
+
+<div id="practice" class="card hidden">
+<h2>타자 연습</h2>
+<div id="sentence"></div>
+<textarea id="input"></textarea>
+<div>
+정확도: <span id="acc">0%</span> |
+WPM: <span id="wpm">0</span>
+</div>
+<button onclick="newSentence()">새 문장</button>
+<button onclick="goHome()">홈</button>
+</div>
+
+<div id="game" class="card hidden">
+<h2>타자 게임</h2>
+<div class="gameArea" id="gameArea"></div>
+<input id="gameInput">
+<div>점수: <span id="score">0</span></div>
+<button onclick="startGame()">게임 시작</button>
+<button onclick="goHome()">홈</button>
+</div>
+
+<div id="ranking" class="card hidden">
+<h2>랭킹</h2>
+<ul id="rankList"></ul>
+<button onclick="goHome()">홈</button>
+</div>
+
+<div id="settings" class="card hidden">
+<h2>설정</h2>
+언어:
+<button onclick="setLang('ko')">한국어</button>
+<button onclick="setLang('en')">English</button>
+<br><br>
+난이도:
+<button onclick="setLevel('easy')">Easy</button>
+<button onclick="setLevel('normal')">Normal</button>
+<button onclick="setLevel('hard')">Hard</button>
+<br><br>
+<button onclick="goHome()">닫기</button>
+</div>
+
+<footer>RoDeLa.corp 2014~2026</footer>
+
+<script>
+let lang="ko";
+let level="normal";
+let startTime;
+
+const ko=[
+"안녕하세요 타자 연습입니다",
+"꾸준한 연습이 중요합니다",
+"정확도가 먼저입니다",
+"집중해서 입력하세요",
+"노력은 배신하지 않습니다"
+];
+const en=[
+"practice makes perfect",
+"typing improves every day",
+"focus on accuracy first",
+"speed comes with practice",
+"keep learning continuously"
+];
+
+function hideAll(){
+["home","practice","game","ranking","settings"]
+.forEach(id=>document.getElementById(id).classList.add("hidden"));
+}
+
+function goHome(){ hideAll(); home.classList.remove("hidden"); }
+function showPractice(){ hideAll(); practice.classList.remove("hidden"); newSentence(); }
+function showGame(){ hideAll(); game.classList.remove("hidden"); }
+function showRanking(){ hideAll(); ranking.classList.remove("hidden"); loadRanking(); }
+function openSettings(){ hideAll(); settings.classList.remove("hidden"); }
+
+function toggleDark(){ document.body.classList.toggle("dark"); }
+
+function setLang(l){ lang=l; alert("언어 변경 완료"); }
+function setLevel(l){ level=l; alert("난이도 변경 완료"); }
+
+let current="";
+function newSentence(){
+let list=lang==="ko"?ko:en;
+current=list[Math.floor(Math.random()*list.length)];
+sentence.innerText=current;
+input.value="";
+startTime=Date.now();
+}
+
+input.addEventListener("input",()=>{
+let typed=input.value;
+let correct=0;
+for(let i=0;i<typed.length;i++){
+if(typed[i]===current[i]) correct++;
+}
+let accuracy=typed.length?Math.round(correct/typed.length*100):0;
+acc.innerText=accuracy+"%";
+
+let minutes=(Date.now()-startTime)/60000;
+let words=typed.length/5;
+let wpmValue=Math.round(words/minutes)||0;
+wpm.innerText=wpmValue;
+});
+
+let score=0;
+let interval;
+
+function startGame(){
+score=0;
+score.innerText=0;
+gameArea.innerHTML="";
+clearInterval(interval);
+
+let speed=3;
+if(level==="easy") speed=2;
+if(level==="normal") speed=3;
+if(level==="hard") speed=6;
+
+interval=setInterval(()=>spawn(speed),1500);
+}
+
+function spawn(speed){
+let list=lang==="ko"?ko:en;
+let word=list[Math.floor(Math.random()*list.length)].split(" ")[0];
+
+let div=document.createElement("div");
+div.className="word";
+div.innerText=word;
+div.style.left=Math.random()*80+"%";
+div.style.top="0px";
+gameArea.appendChild(div);
+
+let fall=setInterval(()=>{
+let t=parseInt(div.style.top);
+div.style.top=(t+speed)+"px";
+if(t>220){ clearInterval(fall); div.remove(); }
+},30);
+}
+
+gameInput.addEventListener("input",()=>{
+document.querySelectorAll(".word").forEach(w=>{
+if(gameInput.value===w.innerText){
+score++;
+document.getElementById("score").innerText=score;
+w.remove();
+gameInput.value="";
+saveRanking(score);
+}
+});
+});
+
+function saveRanking(s){
+let ranks=JSON.parse(localStorage.getItem("ranks")||"[]");
+ranks.push(s);
+ranks.sort((a,b)=>b-a);
+ranks=ranks.slice(0,5);
+localStorage.setItem("ranks",JSON.stringify(ranks));
+}
+
+function loadRanking(){
+let ranks=JSON.parse(localStorage.getItem("ranks")||"[]");
+rankList.innerHTML="";
+ranks.forEach(r=>{
+let li=document.createElement("li");
+li.innerText=r+" 점";
+rankList.appendChild(li);
+});
+}
+</script>
+
+</body>
+</html>
+
